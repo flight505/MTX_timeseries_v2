@@ -1,6 +1,6 @@
 # General settings
 *.log
-*.csv
+# *.csv
 *.dat
 *.xlsx
 *.parquet
