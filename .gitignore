@@ -1,0 +1,69 @@
+# General settings
+*.log
+*.csv
+*.dat
+*.xlsx
+*.parquet
+*.out
+*.pid
+*.seed
+*.db
+*.sql
+*.sqlite
+*.tar.gz
+*.zip
+*.pyc
+*.pyo
+*.pyd
+__pycache__/
+*.swp
+*.bak
+*.tmp
+*.DS_Store
+.idea/
+.vscode/
+*.egg-info/
+dist/
+build/
+eggs/
+parts/
+bin/
+var/
+sdist/
+develop-eggs/
+.installed.cfg
+lib/
+lib64/
+*.egg
+.cache
+*.class
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# Python environments
+ENV/
+
+# Spyder project settings
+.spyderproject
+.spyproject
+
+# PyCharm project settings
+.idea/
+
+# JupyterLab
+.jupyterlab-config
+
+# VS Code
+.vscode/
+
+# Data directory
+data/*
+lightning_logs/*
+checkpoints/*
+optuna_test/*
+papers/1_s20_S1532046422002738_main.pdf
+papers/export.bib
+papers/library.bib
+export.bib
+*.ckpt
