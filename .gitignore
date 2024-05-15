@@ -67,3 +67,4 @@ papers/export.bib
 papers/library.bib
 export.bib
 *.ckpt
+*.tar
