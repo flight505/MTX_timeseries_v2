@@ -1,0 +1,15 @@
+The primary goal is to write 10 pages on deep learning, skip introduction, historical development, and conclusion.
+
+**For the primary goal, you will focus on the following**:
+- Write a very technical explanation of deep learning.
+- Explain the difference between deep learning and other machine learning methods.
+- Explain the use of neural networks in deep learning.
+- Explain the mathematical notation used in deep learning.
+
+**Requirements**:
+- Ensure all content is well-researched and cited in APA style.
+- Include a comprehensive reference table at the end of the document.
+- Do not return a bullet point list of the requirements. Instead, write a well-structured and coherent chapter that meets the requirements.
+- Do not return a plagiarized document.
+- Do NOT write code, but instead focus on explaining the model architectures and use mathematical notation when necessary. 
+- Write all mathematical notation in LaTeX.
