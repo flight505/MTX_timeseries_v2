@@ -365,16 +365,15 @@ class TimeSeriesPreprocessor:
 
     def _fill_residual_nan(self, df):
         feature_columns = [
-            col
-            for col in df.columns
+            col for col in df.columns
             if col not in self.exclude_columns
             and not col.endswith(("_missing", "_delta"))
+            and col != 'unique_id'
         ]
-        df[feature_columns] = df[feature_columns].interpolate(method="linear")
-        df[feature_columns] = df[feature_columns].fillna(method="bfill")
-        df[feature_columns] = df[feature_columns].fillna(method="ffill")
-
+        df[feature_columns] = df.groupby('unique_id')[feature_columns].apply(lambda group: group.interpolate(method='time'))
+        df[feature_columns] = df[feature_columns].fillna(method='ffill').fillna(method='bfill')
         return df
+
 
 
 # Example usage:
@@ -678,13 +677,16 @@ def split_data(unique_ids, df, test_size=0.2, val_size=0.1):
 
 # Function to create a TimeSeries object from a DataFrame
 def create_time_series(patient_data, value_cols, static_covariates, freq):
+    patient_data = patient_data.copy()
+    patient_data['date'] = pd.to_datetime(patient_data['normalized_time'], unit='D')
     return TimeSeries.from_dataframe(
         patient_data,
-        time_col="normalized_time",
+        time_col='date',
         value_cols=value_cols,
         static_covariates=static_covariates,
         freq=freq,
     )
+
 
 
 # Function to append TimeSeries objects to respective lists
