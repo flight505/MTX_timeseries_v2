@@ -19,10 +19,10 @@ from darts.utils.callbacks import TFMProgressBar
 from darts.utils.likelihood_models import QuantileRegression
 from darts.utils.statistics import check_seasonality, plot_acf
 from darts.utils.timeseries_generation import datetime_attribute_timeseries
-from lightning.pytorch import Trainer
-from optuna.integration import PyTorchLightningPruningCallback
+from pytorch_lightning import Trainer
+from optuna_integration.pytorch_lightning import PyTorchLightningPruningCallback
 from optuna.samplers import TPESampler
-from lightning.pytorch.callbacks import Callback
+from pytorch_lightning.callbacks import Callback
 from pytorch_lightning.callbacks.early_stopping import EarlyStopping
 from scipy.optimize import minimize
 
@@ -123,6 +123,8 @@ df = anonymize_unique_id(df)
 print(df.columns)
 
 # %%
+print(df.head())
+# %%
 # Drop the original columns, we will recreate the infusion day "infno_day" 
 # which is a numeric representation of the day after each infusion
 # 
@@ -194,6 +196,7 @@ class TimeSeriesPreprocessor:
         return X
 
     def _calculate_infno_day(self, df):
+        # Don't drop ds_date if fill_residual_nan is True
         df["infno_first_time"] = df.groupby(["unique_id", "infno"])[
             "normalized_time"
         ].transform("min")
@@ -202,7 +205,7 @@ class TimeSeriesPreprocessor:
             "infno_day",
             df["normalized_time"] - df["infno_first_time"],
         )
-        df.drop(columns=["infno_first_time", "ds_date"], inplace=True)
+        df.drop(columns=["infno_first_time"], inplace=True)  # Remove ds_date from drop list
         return df
 
     def prepare_and_process(self, X):
@@ -365,13 +368,24 @@ class TimeSeriesPreprocessor:
 
     def _fill_residual_nan(self, df):
         feature_columns = [
-            col for col in df.columns
+            col for col in df.columns 
             if col not in self.exclude_columns
             and not col.endswith(("_missing", "_delta"))
             and col != 'unique_id'
         ]
-        df[feature_columns] = df.groupby('unique_id')[feature_columns].apply(lambda group: group.interpolate(method='time'))
+        
+        # Process each feature column separately to maintain index compatibility
+        for col in feature_columns:
+            df[col] = df.groupby('unique_id')[col].transform(
+                lambda x: x.interpolate(
+                    method='linear',
+                    limit_direction='both'
+                )
+            )
+        
+        # Fill any remaining NaN values
         df[feature_columns] = df[feature_columns].fillna(method='ffill').fillna(method='bfill')
+        
         return df
 
 
@@ -676,7 +690,16 @@ def split_data(unique_ids, df, test_size=0.2, val_size=0.1):
 
 
 # Function to create a TimeSeries object from a DataFrame
-def create_time_series(patient_data, value_cols, static_covariates, freq):
+def create_time_series(patient_data, value_cols, static_covariates, freq='D'):
+    """
+    Create a Darts TimeSeries object from patient data
+    
+    Args:
+        patient_data: DataFrame containing patient data
+        value_cols: List of columns containing values to include
+        static_covariates: Static covariates for the patient
+        freq: Frequency string (default: 'D' for daily)
+    """
     patient_data = patient_data.copy()
     patient_data['date'] = pd.to_datetime(patient_data['normalized_time'], unit='D')
     return TimeSeries.from_dataframe(
@@ -684,7 +707,7 @@ def create_time_series(patient_data, value_cols, static_covariates, freq):
         time_col='date',
         value_cols=value_cols,
         static_covariates=static_covariates,
-        freq=freq,
+        freq=freq,  # Using 'D' for daily frequency
     )
 
 
@@ -703,13 +726,13 @@ def append_to_lists(
         patient_data.drop(columns=["infno", "infno_day"]),
         value_cols,
         static_cov_df,
-        freq=1,  # Adjust frequency as needed
+        freq='D'  # Using daily frequency
     )
     infno_series = create_time_series(
         patient_data[["normalized_time", "infno", "infno_day"]],
         ["infno", "infno_day"],
         static_cov_df,
-        freq=1,
+        freq='D'  # Using daily frequency
     )
     list_type = (
         "train" if unique_id in train_ids else "val" if unique_id in val_ids else "test"
@@ -1112,5 +1135,14 @@ if study.best_trial:
     print("  Params:")
     for key, value in study.best_trial.params.items():
         print(f"    {key}: {value}")
+
+
+
+
+
+
+
+
+
 
 
